@@ -1,5 +1,5 @@
 # Solving partial differential equations (PDEs) with neural nets
-This code accompanies the project paper *A discussion on solving partial differential equationsusing neural networks*
+This code accompanies the project paper *A discussion on solving partial differential equations using neural networks*
 
 ## Setup
 We recommend the following package versions to reproduce the results of the paper
