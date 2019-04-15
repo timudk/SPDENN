@@ -23,7 +23,6 @@ class sampling_from_dataset:
 	def increase_grab_number(self, num, batchsize):
 		num += batchsize
 		if(num==self.total_samples):
-			print('New epoch!')
 			return 0
 		else:
 			return num
@@ -46,6 +45,12 @@ class sampling_from_dataset:
 
 def main(argv):
 
+	# DEFAULT
+	BATCHSIZE = 4000
+	N_LAYERS_U = 2
+	N_LAYERS_P = 2
+	max_iter = 50000
+
 	try:
 		opts, args = getopt.getopt(argv,"hb:u:p:m:r:",["batchsize=","n_layers_velocity=", "n_layers_pressure=","max_iterations=", "random_seed="])
 	except getopt.GetoptError:
@@ -57,23 +62,19 @@ def main(argv):
 	 		sys.exit()
 		elif opt in ("-b", "--batchsize"):
 	 		BATCHSIZE = int(arg)
-	 		print(BATCHSIZE)
 		elif opt in ("-u", "--n_layers_velocity"):
-			N_LAYERS_V = int(arg)
-			print(N_LAYERS_V)
+			N_LAYERS_U = int(arg)
 		elif opt in ("-p", "--n_layers_pressure"):
 			N_LAYERS_P = int(arg)
 		elif opt in ("-m", "--max_iterations"):
-			print(arg)
 			max_iter = int(arg)
 		elif opt in ("-r", "--random_seed"):
-			seed = int(arg)
 			tf.set_random_seed(seed)
 
 	HIDDEN_UNITS_VELOCITY = [] 
 	HIDDEN_UNITS_PRESSURE = []
 
-	for i in range(N_LAYERS_V):
+	for i in range(N_LAYERS_U):
 		HIDDEN_UNITS_VELOCITY.append(16)
 
 	for i in range(N_LAYERS_P):
@@ -82,22 +83,20 @@ def main(argv):
 	nu = 0.025
 
 	do_save = True
-	save_name = 'test_model/' + str(len(HIDDEN_UNITS)) + '_layer_sq_loss_' + str(BATCHSIZE) + '_m_iter_' + str(max_iter) + '_rs_' + str(seed) 
+	save_name = 'test_model/u_' + str(N_LAYERS_U) + '_p_' + str(N_LAYERS_P) + '_b_' + str(BATCHSIZE) + '_m_' + str(max_iter)
 
 	problem = kovasznay_flow_problem.kovasznay_flow(nu)
 	
-	sampler = sampling_from_dataset('datasets/' + str(BATCHSIZE), BATCHSIZE)
+	sampler = sampling_from_dataset('datasets/kovasznay_' + str(BATCHSIZE), BATCHSIZE)
 	sampler.load_dataset()
 
 	neural_network = neural_networks.neural_networks(2, 2, HIDDEN_UNITS_VELOCITY, HIDDEN_UNITS_PRESSURE, 2, 1)
 
 	velocity_int_var = tf.placeholder(tf.float64, [None, 2]) 
-	velocity_init_var = tf.placeholder(tf.float64, [None, 2]) 
 	pressure_int_var = tf.placeholder(tf.float64, [None, 2])
 	velocity_bou_var = tf.placeholder(tf.float64, [None, 2]) 
 	
 	velocity_int = neural_network.nn_velocity.value_nn_velocity(velocity_int_var)
-	velocity_init = neural_network.nn_velocity.value_nn_velocity(velocity_init_var)
 	pressure_int = neural_network.nn_pressure.value_nn_pressure(pressure_int_var)
 	velocity_bou = neural_network.nn_velocity.value_nn_velocity(velocity_bou_var)
 
@@ -140,9 +139,9 @@ def main(argv):
 	loss_bou_y = tf.square(vel_bou_y-sol_bou_y)
 	loss_bou = loss_bou_x + loss_bou_y
 
-	loss = tf.sqrt(tf.reduce_mean(INT_WEIGHT*loss_int + BOU_WEIGHT*loss_bou + DIV_WEIGHT*loss_div))
+	loss = tf.sqrt(tf.reduce_mean(loss_int + loss_bou + loss_div))
 
-	train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':max_iter})
+	train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol': 1e-14, 'disp': True, 'maxiter': max_iter})
 
 	init = tf.global_variables_initializer()
 

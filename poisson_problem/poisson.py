@@ -1,12 +1,9 @@
 import tensorflow as tf 
-tf.set_random_seed(42)
-
 import numpy as np 
 from scipy import integrate
 import neural_networks
 import poisson_problem
 import matplotlib.pyplot as plt
-import quadpy
 import sys, getopt
 
 class sampling_from_dataset:
@@ -23,7 +20,6 @@ class sampling_from_dataset:
 	def increase_grab_number(self, num, batchsize):
 		num += batchsize
 		if(num==self.total_samples):
-			print('New epoch!')
 			return 0
 		else:
 			return num
@@ -46,7 +42,12 @@ class sampling_from_dataset:
 
 def main(argv):
 
+	# DEFAULT
 	SENSOR_DATA = False
+	N_LAYERS = 1
+	BATCHSIZE = 1000
+	max_iter = 20000
+	seed = 42
 
 	try:
 		opts, args = getopt.getopt(argv,"hb:n:m:s:r:",["batchsize=","n_layers=", "max_iterations=", "sensor_data=", "random_seed="])
@@ -55,18 +56,16 @@ def main(argv):
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-	 		print('poisson.py -i <batchsize> -o <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed>')
+	 		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed>')
 	 		sys.exit()
 		elif opt in ("-b", "--batchsize"):
 	 		BATCHSIZE = int(arg)
 		elif opt in ("-n", "--n_layers"):
 	 		N_LAYERS = int(arg)
 		elif opt in ("-m", "--max_iterations"):
-			print(arg)
 			max_iter = int(arg)
 		elif opt in ("-s", "--sensor_data"):
 			if(int(arg)==1):
-				print('Sensor data on.')
 				SENSOR_DATA = True
 		elif opt in ("-r", "--random_seed"):
 			seed = int(arg)
@@ -87,7 +86,8 @@ def main(argv):
 	sampler = sampling_from_dataset('datasets/' + str(BATCHSIZE), BATCHSIZE)
 	sampler.load_dataset()
 
-	neural_network = neural_networks.neural_network(2, 1, HIDDEN_UNITS)
+	NUM_INPUTS = 2
+	neural_network = neural_networks.neural_network(NUM_INPUTS, 1, HIDDEN_UNITS)
 
 
 	int_var = tf.placeholder(tf.float64, [None, NUM_INPUTS]) 
@@ -120,7 +120,7 @@ def main(argv):
 	loss_sensor_int = tf.square(sum_of_second_derivatives_sensor)
 	loss_sensor_bou = tf.square(value_sensor)
 
-	loss = tf.sqrt(tf.reduce_mean(INT_WEIGHT*loss_int + BOU_WEIGHT*loss_bou))
+	loss = tf.sqrt(tf.reduce_mean(loss_int + loss_bou))
 	sensor_loss = tf.sqrt(tf.reduce_mean(loss_int) + tf.reduce_mean(loss_bou) + tf.reduce_mean(loss_sensor_int) + tf.reduce_mean(loss_sensor_bou))
 
 	train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':max_iter})
@@ -130,8 +130,6 @@ def main(argv):
 	init = tf.global_variables_initializer()
 
 	saver = tf.train.Saver()
-
-	print(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
 
 	with tf.Session() as sess:
 		sess.run(init)
