@@ -5,12 +5,7 @@ Can neural networks learn to solve partial differential equations (PDEs)?  We in
 
 ## Poisson problem
 The Poisson problem under consideration is given as 
-$$ \begin{align}
-\begin{split}
-    -\nabla^2 u (\bm{x}) &= f(\bm{x}) \quad \text{in } \Omega, \\
-    u (\bm{x}) &= g(\bm{x}) \quad \text{on } \partial \Omega,
-\end{split}
-\end{align} $$
+$$-\nabla^2 u (\bm{x}) &= f(\bm{x}) \quad \text{in } \Omega$$
 
 ## Setup
 We recommend the following package versions to reproduce the results of the paper
