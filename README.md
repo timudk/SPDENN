@@ -6,13 +6,13 @@ Can neural networks learn to solve partial differential equations (PDEs)?  We in
 ## Poisson problem
 A neural network (with two fully connected layers of size 16) for the manufactured Poisson problem (using dataset of 2000 interior and boundary points) can be trained using the following command:
 ```console
-foo@bar:~$ python3 poisson_problem/poisson.py -b 2000 -n 2
+foo@bar:~$ python3 poisson.py -b 2000 -n 2
 ```
 
 ## Navier--Stokes problem
 A velocity and a pressure neural network (with two fully connected layers size 16 each) for the Kovasznay problem (using dataset of 4000 interior and boundary points) can be trained using the following command:
 ```console
-foo@bar:~$ python3 navier_stokes_problem/kovasznay_flow.py -b 4000 -u 2 -p 2
+foo@bar:~$ python3 kovasznay_flow.py -b 4000 -u 2 -p 2
 ```
 
 ## Setup
