@@ -109,7 +109,6 @@ def main(argv):
 
 	with tf.Session() as sess:
 		sess.run(init)
-
 		saver.restore(sess, FILENAME)
 		print('Model restored.')
 

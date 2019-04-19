@@ -62,7 +62,7 @@ def fmt(x, pos):
     return r'${} \times 10^{{{}}}$'.format(a, b)
 
 NUM_STEPS = 1
-BATCHSIZE = 30351 
+BATCHSIZE = 30351 #151*201
 
 HIDDEN_UNITS_VELOCITY = [16, 16]
 HIDDEN_UNITS_PRESSURE = [16] 
@@ -75,12 +75,10 @@ problem = kovasznay_flow_problem.kovasznay_flow(nu)
 neural_network = neural_networks.neural_networks(2, 2, HIDDEN_UNITS_VELOCITY, HIDDEN_UNITS_PRESSURE, 2, 1)
 
 velocity_int_var = tf.placeholder(tf.float64, [None, 2]) 
-velocity_init_var = tf.placeholder(tf.float64, [None, 2]) 
 pressure_int_var = tf.placeholder(tf.float64, [None, 2])
 velocity_bou_var = tf.placeholder(tf.float64, [None, 2]) 
 
 velocity_int = neural_network.nn_velocity.value_nn_velocity(velocity_int_var)
-velocity_init = neural_network.nn_velocity.value_nn_velocity(velocity_init_var)
 pressure_int = neural_network.nn_pressure.value_nn_pressure(pressure_int_var)
 velocity_bou = neural_network.nn_velocity.value_nn_velocity(velocity_bou_var)
 
@@ -91,13 +89,11 @@ grad_p = neural_network.nn_pressure.first_derivates_nn_pressure_multidimensional
 p_x = tf.slice(grad_p[0][0], [0,0], [BATCHSIZE,1])
 p_y = tf.slice(grad_p[0][0], [0,1], [BATCHSIZE,1])
 
-
 sol_int_x = tf.placeholder(tf.float64, [None, 1])
 sol_int_y = tf.placeholder(tf.float64, [None, 1])
 
 sol_bou_x = tf.placeholder(tf.float64, [None, 1])
 sol_bou_y = tf.placeholder(tf.float64, [None, 1])
-
 
 u_xx = tf.slice(grad_grad[0][0][0], [0, 0], [BATCHSIZE, 1])
 u_yy = tf.slice(grad_grad[0][1][0], [0, 1], [BATCHSIZE, 1])
@@ -120,7 +116,6 @@ vel_y = tf.slice(velocity_int, [0, 1], [BATCHSIZE, 1])
 advection_x = u_x*vel_x + u_y*vel_y
 advection_y = v_x*vel_x + v_y*vel_y
 
-
 loss_int = tf.square(-advection_x+nu*(u_xx+u_yy)+sol_int_x-p_x) + tf.square(-advection_y+nu*(v_xx+v_yy)+sol_int_y-p_y)
 loss_div = tf.square(u_x+v_y)
 loss_bou_x = tf.square(vel_bou_x-sol_bou_x)
@@ -129,37 +124,19 @@ loss_bou = loss_bou_x + loss_bou_y
 
 loss = tf.reduce_mean(loss_int + loss_bou + loss_div)
 
-
-train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':5000})
-
-
 init = tf.global_variables_initializer()
-
 saver = tf.train.Saver()
-
-f_x = np.zeros(BATCHSIZE)
-f_y = np.zeros(BATCHSIZE)
-
-bou_x = np.zeros(BATCHSIZE)
-bou_y = np.zeros(BATCHSIZE)
-
-print(np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
-
-
 with tf.Session() as sess:
 	sess.run(init)
-
 	saver.restore(sess, restore_name)
 	print("Model restored.")
 
-	
 	err = draw_magnitude_of_err_2d(problem.x_range, problem.y_range, problem.velocity, 151, 201, neural_network.nn_velocity.value_nn_velocity, 'velocity')
 	plt.imshow(np.rot90(err), cmap='hot', interpolation='nearest', extent=[-0.5,1.0,-0.5,1.5])
 	plt.xlabel(r'$x_1$')
 	plt.ylabel(r'$x_2$')
 	plt.colorbar(format=ticker.FuncFormatter(fmt))
 	plt.show()
-
 
 	err = draw_magnitude_int_loss(problem.x_range, problem.y_range, sess, 151, 201)
 	plt.imshow(np.rot90(err), cmap='hot', interpolation='nearest')

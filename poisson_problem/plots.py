@@ -71,22 +71,16 @@ sol_bou = tf.placeholder(tf.float64, [None, 1])
 
 loss_int = tf.square(grad_grad[0]+grad_grad[1]+sol_int)
 loss_bou = tf.square(value_bou-sol_bou)
-
 loss = tf.reduce_mean(loss_int + loss_bou)
 
-train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':5000})
 
 init = tf.global_variables_initializer()
-
 saver = tf.train.Saver()
-
 with tf.Session() as sess:
 	sess.run(init)
-
 	saver.restore(sess, restore_name)
 	print("Model restored.")
 
-	
 	err = draw_magnitude_of_err_2d(problem.range, problem.range, problem.velocity, 101, 101, neural_network.value)
 	plt.imshow(np.rot90(err), cmap='hot', interpolation='nearest', extent=[0.0,1.0,0.0,1.0], aspect='auto')
 	plt.xlabel(r'$x_1$')
