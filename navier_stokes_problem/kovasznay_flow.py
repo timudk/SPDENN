@@ -6,7 +6,6 @@ from scipy import integrate
 import neural_networks
 import kovasznay_flow_problem
 import matplotlib.pyplot as plt
-import quadpy
 import sys, getopt
 
 class sampling_from_dataset:
@@ -49,16 +48,17 @@ def main(argv):
 	BATCHSIZE = 4000
 	N_LAYERS_U = 2
 	N_LAYERS_P = 2
-	max_iter = 50000
+	MAX_ITER = 50000
+	DO_SAVE = False
 
 	try:
-		opts, args = getopt.getopt(argv,"hb:u:p:m:r:",["batchsize=","n_layers_velocity=", "n_layers_pressure=","max_iterations=", "random_seed="])
+		opts, args = getopt.getopt(argv,"hb:u:p:m:r:s:",["batchsize=","n_layers_velocity=", "n_layers_pressure=", "max_iterations=", "random_seed=", "save_network="])
 	except getopt.GetoptError:
-		print('kovasznay_flow.py -b <batchsize> -u <n_layers_velocity> -p <n_layers_pressure> -m <max_iterations>')
+		print('kovasznay_flow.py -b <batchsize> -u <n_layers_velocity> -p <n_layers_pressure> -m <max_iterations> -r <random_seed> -s <save_network>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-	 		print('kovasznay_flow.py -b <batchsize> -u <n_layers_velocity> -p <n_layers_pressure> -m <max_iterations>')
+	 		print('kovasznay_flow.py -b <batchsize> -u <n_layers_velocity> -p <n_layers_pressure> -m <max_iterations> -r <random_seed> -s <save_network>')
 	 		sys.exit()
 		elif opt in ("-b", "--batchsize"):
 	 		BATCHSIZE = int(arg)
@@ -67,9 +67,13 @@ def main(argv):
 		elif opt in ("-p", "--n_layers_pressure"):
 			N_LAYERS_P = int(arg)
 		elif opt in ("-m", "--max_iterations"):
-			max_iter = int(arg)
+			MAX_ITER = int(arg)
 		elif opt in ("-r", "--random_seed"):
-			tf.set_random_seed(seed)
+			tf.set_random_seed(int(arg))
+		elif opt in ("-s", "--save_network"):
+			DO_SAVE = bool(int(arg))
+			if DO_SAVE:
+				print("Saving network after training.")
 
 	HIDDEN_UNITS_VELOCITY = [] 
 	HIDDEN_UNITS_PRESSURE = []
@@ -82,8 +86,7 @@ def main(argv):
 
 	nu = 0.025
 
-	do_save = True
-	save_name = 'test_model/u_' + str(N_LAYERS_U) + '_p_' + str(N_LAYERS_P) + '_b_' + str(BATCHSIZE) + '_m_' + str(max_iter)
+	save_name = 'test_model/u_' + str(N_LAYERS_U) + '_p_' + str(N_LAYERS_P) + '_b_' + str(BATCHSIZE) + '_m_' + str(MAX_ITER)
 
 	problem = kovasznay_flow_problem.kovasznay_flow(nu)
 	
@@ -141,7 +144,7 @@ def main(argv):
 
 	loss = tf.sqrt(tf.reduce_mean(loss_int + loss_bou + loss_div))
 
-	train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol': 1e-14, 'disp': True, 'maxiter': max_iter})
+	train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol': 1e-14, 'disp': True, 'maxiter': MAX_ITER})
 
 	init = tf.global_variables_initializer()
 
@@ -179,7 +182,7 @@ def main(argv):
 
 		train_scipy.minimize(sess, feed_dict={sol_int_x:f_x, sol_int_y:f_y, sol_bou_x:bou_x, sol_bou_y:bou_y, velocity_int_var:int_draw, velocity_bou_var:bou_draw, pressure_int_var:int_draw})
 				
-		if do_save:		
+		if DO_SAVE:		
 			save_path = saver.save(sess, save_name)
 			print("Model saved in path: %s" % save_path)
 

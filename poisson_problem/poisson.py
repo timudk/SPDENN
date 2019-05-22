@@ -1,4 +1,6 @@
 import tensorflow as tf 
+tf.set_random_seed(42)
+
 import numpy as np 
 from scipy import integrate
 import neural_networks
@@ -46,40 +48,44 @@ def main(argv):
 	SENSOR_DATA = False
 	N_LAYERS = 1
 	BATCHSIZE = 1000
-	max_iter = 20000
-	seed = 42
+	MAX_ITER = 50000
+	DO_SAVE = False
+	SEED = 42
 
 	try:
-		opts, args = getopt.getopt(argv,"hb:n:m:s:r:",["batchsize=","n_layers=", "max_iterations=", "sensor_data=", "random_seed="])
+		opts, args = getopt.getopt(argv,"hb:n:m:s:r:",["batchsize=","n_layers=", "max_iterations=", "sensor_data=", "random_seed=", "save_network="])
 	except getopt.GetoptError:
-		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed>')
+		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed> -s <save_network>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-	 		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed>')
+	 		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed> -s <save_network>')
 	 		sys.exit()
 		elif opt in ("-b", "--batchsize"):
 	 		BATCHSIZE = int(arg)
 		elif opt in ("-n", "--n_layers"):
 	 		N_LAYERS = int(arg)
 		elif opt in ("-m", "--max_iterations"):
-			max_iter = int(arg)
+			MAX_ITER = int(arg)
 		elif opt in ("-s", "--sensor_data"):
 			if(int(arg)==1):
 				SENSOR_DATA = True
 		elif opt in ("-r", "--random_seed"):
-			seed = int(arg)
-			tf.set_random_seed(seed)
+			SEED = int(arg)
+			tf.set_random_seed(SEED)
+		elif opt in ("-s", "--save_network"):
+			DO_SAVE = bool(int(arg))
+			if DO_SAVE:
+				print("Saving network after training.")
 
 	HIDDEN_UNITS = []
 	for i in range(N_LAYERS):
 		HIDDEN_UNITS.append(16)
 
-	do_save = True
 	if(SENSOR_DATA):
-		save_name = 'test_model/' + str(len(HIDDEN_UNITS)) + '_layer_sq_loss_' + str(BATCHSIZE) + '_m_iter_' + str(max_iter) + '_rs_' + str(seed) + '_wsd'
+		save_name = 'test_model/' + str(len(HIDDEN_UNITS)) + '_layer_sq_loss_' + str(BATCHSIZE) + '_m_iter_' + str(MAX_ITER) + '_rs_' + str(SEED) + '_wsd'
 	else:
-		save_name = 'test_model/' + str(len(HIDDEN_UNITS)) + '_layer_sq_loss_' + str(BATCHSIZE) + '_m_iter_' + str(max_iter) + '_rs_' + str(seed) 
+		save_name = 'test_model/' + str(len(HIDDEN_UNITS)) + '_layer_sq_loss_' + str(BATCHSIZE) + '_m_iter_' + str(MAX_ITER) + '_rs_' + str(SEED) 
 
 	problem = poisson_problem.poisson_2d()
 	
@@ -123,8 +129,8 @@ def main(argv):
 	loss = tf.sqrt(tf.reduce_mean(loss_int + loss_bou))
 	sensor_loss = tf.sqrt(tf.reduce_mean(loss_int) + tf.reduce_mean(loss_bou) + tf.reduce_mean(loss_sensor_int) + tf.reduce_mean(loss_sensor_bou))
 
-	train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':max_iter})
-	train_scipy_sensor = tf.contrib.opt.ScipyOptimizerInterface(sensor_loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':max_iter})
+	train_scipy = tf.contrib.opt.ScipyOptimizerInterface(loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':MAX_ITER})
+	train_scipy_sensor = tf.contrib.opt.ScipyOptimizerInterface(sensor_loss, method='BFGS', options={'gtol':1e-14, 'disp':True, 'maxiter':MAX_ITER})
 
 	
 	init = tf.global_variables_initializer()
@@ -165,7 +171,7 @@ def main(argv):
 			train_scipy.minimize(sess, feed_dict={sol_int:f, sol_bou:bou, int_var:int_draw, bou_var:bou_draw})
 	
 
-		if do_save:		
+		if DO_SAVE:		
 			save_path = saver.save(sess, save_name)
 			print("Model saved in path: %s" % save_path)
 
