@@ -53,13 +53,13 @@ def main(argv):
 	SEED = 42
 
 	try:
-		opts, args = getopt.getopt(argv,"hb:n:m:s:r:",["batchsize=","n_layers=", "max_iterations=", "sensor_data=", "random_seed=", "save_network="])
+		opts, args = getopt.getopt(argv,"hb:n:m:d:r:s:",["batchsize=","n_layers=", "max_iterations=", "sensor_data=", "random_seed=", "save_network="])
 	except getopt.GetoptError:
-		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed> -s <save_network>')
+		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -d <sensor_data> -r <random_seed> -s <save_network>')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-	 		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -s <sensor_data> -r <random_seed> -s <save_network>')
+	 		print('poisson.py -b <batchsize> -n <n_layers> -m <max_iterations> -d <sensor_data> -r <random_seed> -s <save_network>')
 	 		sys.exit()
 		elif opt in ("-b", "--batchsize"):
 	 		BATCHSIZE = int(arg)
@@ -67,7 +67,7 @@ def main(argv):
 	 		N_LAYERS = int(arg)
 		elif opt in ("-m", "--max_iterations"):
 			MAX_ITER = int(arg)
-		elif opt in ("-s", "--sensor_data"):
+		elif opt in ("-d", "--sensor_data"):
 			if(int(arg)==1):
 				SENSOR_DATA = True
 		elif opt in ("-r", "--random_seed"):
