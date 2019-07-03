@@ -3,6 +3,8 @@ Can neural networks learn to solve partial differential equations (PDEs)?  We in
 
 * Tim Dockhorn. "A Discussion on Solving Partial Differential Equations using Neural Networks." https://arxiv.org/abs/1904.07200
 
+You can hear me talking about this work and machine learning in general on Ashwin's podcast at https://www.youtube.com/watch?v=3c6YXfgi46Q&t=9s.
+
 ## Poisson problem
 A neural network (with two fully connected layers of size 16) for the manufactured Poisson problem (using dataset of 2000 interior and boundary points) can be trained using the following command:
 ```console
