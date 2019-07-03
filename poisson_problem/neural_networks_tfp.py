@@ -133,14 +133,14 @@ class neural_network:
 	def loss(self):
 		value_bou = self.value(self.bou_var)
 
-		# grad = self.first_derivatives(self.int_var)
-		# grad_grad= self.second_derivatives(self.int_var)
-		# sum_of_second_derivatives = 0.0
-		# for i in range(self.n_input):
-		# 	sum_of_second_derivatives += grad_grad[i]
+		grad = self.first_derivatives(self.int_var)
+		grad_grad= self.second_derivatives(self.int_var)
+		sum_of_second_derivatives = 0.0
+		for i in range(self.n_input):
+			sum_of_second_derivatives += grad_grad[i]
 
-		# loss_int = tf.square(sum_of_second_derivatives + self.sol_int)
+		loss_int = tf.square(sum_of_second_derivatives + self.sol_int)
 		loss_bou = tf.square(value_bou - self.sol_bou)
 
-		# return tf.sqrt(tf.reduce_mean(loss_int + loss_bou))
-		return tf.sqrt(tf.reduce_mean(loss_bou))
+		return tf.sqrt(tf.reduce_mean(loss_int + loss_bou))
+		# return tf.sqrt(tf.reduce_mean(loss_bou))
